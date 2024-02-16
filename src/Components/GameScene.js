@@ -19,12 +19,12 @@ const GameScene = () => {
         ws.send(JSON.stringify({ signal: data }));
       });
 
-      ws.onmessage = (message) => {
-        const data = JSON.parse(message.data);
-        if (data.signal) {
-          peer.signal(data.signal);
-        }
-      };
+      // ws.onmessage = (message) => {
+      //   const data = JSON.parse(message.data);
+      //   if (data.signal) {
+      //     peer.signal(data.signal);
+      //   }
+      // };
 
       peer.on("connect", () => {
         console.log("Peer connection established");
@@ -58,6 +58,14 @@ const GameScene = () => {
     pointLight.position.set(10, 10, 10);
     scene.add(pointLight);
     document.addEventListener("click", () => controls.lock(), false);
+
+    let playerModel = new THREE.Mesh(
+      new THREE.BoxGeometry(1, 1, 1),
+      new THREE.MeshBasicMaterial({ color: 0xffffff })
+    );
+    scene.add(playerModel);
+    playerModel.position.set(0, -1, -5);
+
     let moveForward = false;
     let moveBackward = false;
     let moveLeft = false;
@@ -135,6 +143,13 @@ const GameScene = () => {
       if (moveLeft || moveRight) velocity.x -= direction.x * 400.0 * delta;
       controls.moveRight(-velocity.x * delta);
       controls.moveForward(-velocity.z * delta);
+
+      if (playerModel) {
+        playerModel.position.copy(controls.getObject().position);
+        playerModel.position.y -= 1;
+        playerModel.rotation.y = camera.rotation.y;
+      }
+
       prevTime = time;
       renderer.render(scene, camera);
     };
