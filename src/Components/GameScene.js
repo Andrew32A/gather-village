@@ -64,7 +64,7 @@ const GameScene = () => {
     };
 
     const updatePlayerPosition = (peerId, position) => {
-      console.log(otherPlayers.current, peerId, otherPlayers.current[peerId]);
+      // console.log(otherPlayers.current, peerId, otherPlayers.current[peerId]);
       if (!otherPlayers.current[peerId]) {
         const geometry = new THREE.BoxGeometry(1, 1, 1);
         const material = new THREE.MeshBasicMaterial({
