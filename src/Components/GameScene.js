@@ -1,11 +1,16 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
+import {
+  CSS3DRenderer,
+  CSS3DObject,
+} from "three/examples/jsm/renderers/CSS3DRenderer.js";
 import { PointerLockControls } from "three/examples/jsm/controls/PointerLockControls";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import Peer from "simple-peer";
 
 const GameScene = () => {
   const mountRef = useRef(null);
+  const css3dMountRef = useRef(null);
   const [peers, setPeers] = useState({});
   const otherPlayers = useRef({});
 
@@ -95,6 +100,7 @@ const GameScene = () => {
 
     const positionInterval = setInterval(sendPosition, 100);
 
+    // Three.js WebGL scene setup
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
       75,
@@ -102,14 +108,47 @@ const GameScene = () => {
       0.1,
       1000
     );
-    const renderer = new THREE.WebGLRenderer();
+    const renderer = new THREE.WebGLRenderer({ alpha: true }); // Enable transparency to see the CSS3D content behind the WebGL content
     renderer.setSize(window.innerWidth, window.innerHeight);
     mountRef.current.appendChild(renderer.domElement);
+
+    // CSS3DRenderer setup
+    const css3dRenderer = new CSS3DRenderer();
+    css3dRenderer.setSize(window.innerWidth, window.innerHeight);
+    css3dRenderer.domElement.style.position = "absolute";
+    css3dRenderer.domElement.style.top = "0";
+    css3dMountRef.current.appendChild(css3dRenderer.domElement);
 
     const controls = new PointerLockControls(camera, document.body);
     scene.add(controls.getObject());
 
     document.addEventListener("click", () => controls.lock(), false);
+
+    // create a YouTube iframe element
+    const createYouTubeWall = (id, x, y, z, ry) => {
+      var div = document.createElement("div");
+      div.style.width = "480px"; // size of the "wall"
+      div.style.height = "270px"; // size of the "wall"
+      var iframe = document.createElement("iframe");
+      iframe.style.width = "480px";
+      iframe.style.height = "270px";
+      iframe.style.border = "0px";
+      iframe.src = [
+        "https://www.youtube.com/embed/",
+        id,
+        "?rel=0&autoplay=1&mute=1",
+      ].join("");
+      div.appendChild(iframe);
+
+      var object = new CSS3DObject(div);
+      object.position.set(x, y, z);
+      object.rotation.y = ry;
+      return object;
+    };
+
+    // add the YouTube wall to the scene
+    const css3dScene = new THREE.Scene(); // separate scene for CSS3DRenderer objects
+    css3dScene.add(createYouTubeWall("B0J27sf9N1Y", 0, 0, -500, 0)); // position of wall
 
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
     scene.add(ambientLight);
@@ -189,6 +228,11 @@ const GameScene = () => {
       }
     );
     camera.position.set(0, 2, 0);
+
+    // render youtube wall
+    css3dRenderer.render(css3dScene, camera);
+
+    // main animate loop
     const animate = function () {
       requestAnimationFrame(animate);
       const time = performance.now();
@@ -224,7 +268,21 @@ const GameScene = () => {
     };
   }, []);
 
-  return <div ref={mountRef} style={{ width: "100%", height: "100vh" }}></div>;
+  return (
+    <div style={{ position: "relative", width: "100%", height: "100vh" }}>
+      <div ref={mountRef} style={{ width: "100%", height: "100%" }}></div>
+      <div
+        ref={css3dMountRef}
+        style={{
+          width: "100%",
+          height: "100%",
+          position: "absolute",
+          top: "0",
+          left: "0",
+        }}
+      ></div>
+    </div>
+  );
 };
 
 export default GameScene;
