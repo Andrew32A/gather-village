@@ -126,12 +126,12 @@ const GameScene = () => {
 
     // create a YouTube iframe element
     const createYouTubeWall = (id, x, y, z, ry) => {
-      var div = document.createElement("div");
-      div.style.width = "480px"; // size of the "wall"
-      div.style.height = "270px"; // size of the "wall"
-      var iframe = document.createElement("iframe");
-      iframe.style.width = "480px";
-      iframe.style.height = "270px";
+      let div = document.createElement("div");
+      div.style.width = "960px"; // size of the "wall"
+      div.style.height = "540px"; // size of the "wall"
+      let iframe = document.createElement("iframe");
+      iframe.style.width = "960px";
+      iframe.style.height = "540px";
       iframe.style.border = "0px";
       iframe.src = [
         "https://www.youtube.com/embed/",
@@ -140,7 +140,7 @@ const GameScene = () => {
       ].join("");
       div.appendChild(iframe);
 
-      var object = new CSS3DObject(div);
+      let object = new CSS3DObject(div);
       object.position.set(x, y, z);
       object.rotation.y = ry;
       return object;
@@ -148,7 +148,7 @@ const GameScene = () => {
 
     // add the YouTube wall to the scene
     const css3dScene = new THREE.Scene(); // separate scene for CSS3DRenderer objects
-    css3dScene.add(createYouTubeWall("B0J27sf9N1Y", 0, 0, -500, 0)); // position of wall
+    css3dScene.add(createYouTubeWall("B0J27sf9N1Y", 500, 0, -500, 55)); // position of wall, 110 is 180?
 
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
     scene.add(ambientLight);
@@ -229,9 +229,6 @@ const GameScene = () => {
     );
     camera.position.set(0, 2, 0);
 
-    // render youtube wall
-    css3dRenderer.render(css3dScene, camera);
-
     // main animate loop
     const animate = function () {
       requestAnimationFrame(animate);
@@ -256,6 +253,7 @@ const GameScene = () => {
 
       prevTime = time;
       renderer.render(scene, camera);
+      css3dRenderer.render(css3dScene, camera); // render youtube wall
     };
     animate();
 
@@ -271,16 +269,7 @@ const GameScene = () => {
   return (
     <div style={{ position: "relative", width: "100%", height: "100vh" }}>
       <div ref={mountRef} style={{ width: "100%", height: "100%" }}></div>
-      <div
-        ref={css3dMountRef}
-        style={{
-          width: "100%",
-          height: "100%",
-          position: "absolute",
-          top: "0",
-          left: "0",
-        }}
-      ></div>
+      <div ref={css3dMountRef}></div>
     </div>
   );
 };
