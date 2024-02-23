@@ -127,11 +127,11 @@ const GameScene = () => {
     // create a YouTube iframe element
     const createYouTubeWall = (id, x, y, z, ry) => {
       let div = document.createElement("div");
-      div.style.width = "960px"; // size of the "wall"
-      div.style.height = "540px"; // size of the "wall"
+      div.style.width = "50px"; // size of the "wall"
+      div.style.height = "45px"; // size of the "wall"
       let iframe = document.createElement("iframe");
-      iframe.style.width = "960px";
-      iframe.style.height = "540px";
+      iframe.style.width = "64px";
+      iframe.style.height = "45px";
       iframe.style.border = "0px";
       iframe.src = [
         "https://www.youtube.com/embed/",
@@ -148,7 +148,7 @@ const GameScene = () => {
 
     // add the YouTube wall to the scene
     const css3dScene = new THREE.Scene(); // separate scene for CSS3DRenderer objects
-    css3dScene.add(createYouTubeWall("B0J27sf9N1Y", 500, 0, -500, 55)); // position of wall, 110 is 180?
+    css3dScene.add(createYouTubeWall("B0J27sf9N1Y", 30, 15, -10, 55)); // position of wall, youtube video id, left/right of user, up/down of user, front/back of user, rotation of wall
 
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
     scene.add(ambientLight);
@@ -156,7 +156,6 @@ const GameScene = () => {
     const pointLight = new THREE.PointLight(0xffffff, 1, 100);
     pointLight.position.set(10, 10, 10);
     scene.add(pointLight);
-    document.addEventListener("click", () => controls.lock(), false);
 
     let playerModel = new THREE.Mesh(
       new THREE.BoxGeometry(1, 1, 1),
@@ -172,6 +171,7 @@ const GameScene = () => {
     let prevTime = performance.now();
     const velocity = new THREE.Vector3();
     const direction = new THREE.Vector3();
+    document.addEventListener("click", () => controls.lock(), false);
     document.addEventListener(
       "keydown",
       (event) => {
@@ -264,7 +264,7 @@ const GameScene = () => {
       document.removeEventListener("keydown", (event) => {});
       document.removeEventListener("keyup", (event) => {});
     };
-  }, []);
+  }, [peers]);
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100vh" }}>
