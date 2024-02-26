@@ -127,11 +127,11 @@ const GameScene = () => {
     // create a YouTube iframe element
     const createYouTubeWall = (id, x, y, z, ry) => {
       let div = document.createElement("div");
-      div.style.width = "50px"; // size of the "wall"
-      div.style.height = "45px"; // size of the "wall"
+      div.style.width = "500px"; // size of the "wall"
+      div.style.height = "450px"; // size of the "wall"
       let iframe = document.createElement("iframe");
-      iframe.style.width = "64px";
-      iframe.style.height = "45px";
+      iframe.style.width = "640px";
+      iframe.style.height = "450px";
       iframe.style.border = "0px";
       iframe.src = [
         "https://www.youtube.com/embed/",
@@ -148,7 +148,7 @@ const GameScene = () => {
 
     // add the YouTube wall to the scene
     const css3dScene = new THREE.Scene(); // separate scene for CSS3DRenderer objects
-    css3dScene.add(createYouTubeWall("B0J27sf9N1Y", 30, 15, -10, 55)); // position of wall, youtube video id, left/right of user, up/down of user, front/back of user, rotation of wall
+    css3dScene.add(createYouTubeWall("B0J27sf9N1Y", 530, 200, -130, 55)); // position of wall, youtube video id, left/right of user, up/down of user, front/back of user, rotation of wall.
 
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
     scene.add(ambientLight);
