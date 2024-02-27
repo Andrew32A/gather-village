@@ -9,67 +9,134 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import Peer from "simple-peer";
 
 const GameScene = () => {
+  const wsRef = useRef(null);
   const mountRef = useRef(null);
   const css3dMountRef = useRef(null);
   const [peers, setPeers] = useState({});
   const otherPlayers = useRef({});
+  const youtubeWallRef = useRef(null);
+
+  // update video in the scene
+  const updateVideo = (videoId) => {
+    console.log("||RECEIVED|| video ID, updating YouTube video:", videoId);
+    // css3dScene.remove(youtubeWallRef.current); // apparently i dont need this... AND IT WORKS NOW! WOOOOOOOOOOOO!!!!! you have no idea the pain and tears this caused me
+    css3dScene.add(createYouTubeWall(videoId, 530, 200, -130, 55));
+  };
+
+  // init YouTube wall
+  const createYouTubeWall = (id, x, y, z, ry) => {
+    let div, iframe;
+    if (youtubeWallRef.current) {
+      iframe = youtubeWallRef.current.element.querySelector("iframe");
+      iframe.id = "youtube-iframe";
+      iframe.src = `https://www.youtube.com/embed/${id}?rel=0&autoplay=1&mute=1`;
+    } else {
+      div = document.createElement("div");
+      div.style.width = "500px";
+      div.style.height = "450px";
+      iframe = document.createElement("iframe");
+      iframe.style.width = "640px";
+      iframe.style.height = "450px";
+      iframe.style.border = "0px";
+      iframe.src = `https://www.youtube.com/embed/${id}?rel=0&autoplay=1&mute=1`;
+      div.appendChild(iframe);
+
+      let object = new CSS3DObject(div);
+      object.position.set(x, y, z);
+      object.rotation.y = ry;
+      youtubeWallRef.current = object;
+      return object;
+    }
+  };
+
+  const css3dScene = new THREE.Scene();
+  css3dScene.add(createYouTubeWall("LDU_Txk06tM", 530, 200, -130, 55));
 
   useEffect(() => {
-    const ws = new WebSocket("ws://localhost:8080");
-    ws.onopen = () => {
+    wsRef.current = new WebSocket("ws://localhost:8080");
+    wsRef.current.onopen = () => {
       console.log("Connected to the signaling server");
     };
 
-    ws.onmessage = (message) => {
-      const handleData = (data) => {
-        if (data.signal && peers[data.peerId]) {
-          peers[data.peerId].signal(data.signal);
-        } else if (data.type === "new-peer") {
-          const peerId = data.peerId;
-          const peer = new Peer({ initiator: false, trickle: false });
+    // handle signaling for peers
+    const handleSignalData = (data) => {
+      if (data.signal && peers[data.peerId]) {
+        peers[data.peerId].signal(data.signal);
+      }
+    };
 
-          peer.on("signal", (signal) => {
-            ws.send(JSON.stringify({ type: "signal", peerId, signal }));
-          });
+    // create and manage a new peer connection
+    const handleNewPeer = (data) => {
+      const peerId = data.peerId;
+      const peer = new Peer({ initiator: false, trickle: false });
 
-          peer.on("data", (data) => {
-            const parsedData = JSON.parse(data);
-            const { type, position } = parsedData;
-            if (type === "updatePosition" && position) {
-              updatePlayerPosition(peerId, position);
-            }
-          });
+      peer.on("signal", (signal) => {
+        wsRef.current.send(JSON.stringify({ type: "signal", peerId, signal }));
+      });
 
-          setPeers((prev) => ({ ...prev, [peerId]: peer }));
-        } else if (data.type === "updatePosition") {
-          const { peerId, position } = data;
+      peer.on("data", (data) => {
+        const parsedData = JSON.parse(data);
+        const { type, position } = parsedData;
+        if (type === "updatePosition" && position) {
           updatePlayerPosition(peerId, position);
+        }
+      });
+
+      setPeers((prev) => ({ ...prev, [peerId]: peer }));
+    };
+
+    // handle update player position
+    const handleUpdatePosition = (data) => {
+      const { peerId, position } = data;
+      updatePlayerPosition(peerId, position);
+    };
+
+    // main function to handle incoming messages
+    const handleMessage = (message) => {
+      console.log("IS THIS WORKING?!?!");
+      const handleData = (data) => {
+        switch (data.type) {
+          case "signal":
+            handleSignalData(data);
+            break;
+          case "updateVideo":
+            updateVideo(data.videoId);
+            break;
+          case "new-peer":
+            handleNewPeer(data);
+            break;
+          case "updatePosition":
+            console.log("||RECEIVED|| position update:", data);
+            handleUpdatePosition(data);
+            break;
+          default:
+            console.error("Received unknown data type:", data.type);
+        }
+      };
+
+      const processData = (data) => {
+        try {
+          const parsedData = JSON.parse(data);
+          handleData(parsedData);
+        } catch (e) {
+          console.error("Error parsing message data", e);
         }
       };
 
       if (message.data instanceof Blob) {
         const reader = new FileReader();
-        reader.onload = function () {
-          try {
-            const data = JSON.parse(reader.result);
-            handleData(data);
-          } catch (e) {
-            console.error("Error parsing JSON from Blob", e);
-          }
-        };
+        reader.onload = () => processData(reader.result);
+        reader.onerror = (e) => console.error("Error reading Blob data", e);
         reader.readAsText(message.data);
       } else {
-        try {
-          const data = JSON.parse(message.data);
-          handleData(data);
-        } catch (e) {
-          console.error("Error parsing message data", e);
-        }
+        processData(message.data);
       }
     };
 
+    // assign the message handler to the WebSocket reference
+    wsRef.current.onmessage = handleMessage;
+
     const updatePlayerPosition = (peerId, position) => {
-      // console.log(otherPlayers.current, peerId, otherPlayers.current[peerId]);
       if (!otherPlayers.current[peerId]) {
         const geometry = new THREE.BoxGeometry(1, 1, 1);
         const material = new THREE.MeshBasicMaterial({
@@ -85,22 +152,25 @@ const GameScene = () => {
     };
 
     const sendPosition = () => {
-      if (ws.readyState === WebSocket.OPEN) {
+      if (wsRef.current.readyState === WebSocket.OPEN) {
         const position = controls.getObject().position;
-        ws.send(
+        wsRef.current.send(
           JSON.stringify({
             type: "updatePosition",
             position: { x: position.x, y: position.y, z: position.z },
           })
         );
       } else {
-        console.log("WebSocket is not open. ReadyState:", ws.readyState);
+        console.log(
+          "WebSocket is not open. ReadyState:",
+          wsRef.current.readyState
+        );
       }
     };
 
+    // tick rate for sending position updates, 100ms by default
     const positionInterval = setInterval(sendPosition, 100);
 
-    // Three.js WebGL scene setup
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
       75,
@@ -108,11 +178,10 @@ const GameScene = () => {
       0.1,
       1000
     );
-    const renderer = new THREE.WebGLRenderer({ alpha: true }); // Enable transparency to see the CSS3D content behind the WebGL content
+    const renderer = new THREE.WebGLRenderer({ alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     mountRef.current.appendChild(renderer.domElement);
 
-    // CSS3DRenderer setup
     const css3dRenderer = new CSS3DRenderer();
     css3dRenderer.setSize(window.innerWidth, window.innerHeight);
     css3dRenderer.domElement.style.position = "absolute";
@@ -123,32 +192,6 @@ const GameScene = () => {
     scene.add(controls.getObject());
 
     document.addEventListener("click", () => controls.lock(), false);
-
-    // create a YouTube iframe element
-    const createYouTubeWall = (id, x, y, z, ry) => {
-      let div = document.createElement("div");
-      div.style.width = "500px"; // size of the "wall"
-      div.style.height = "450px"; // size of the "wall"
-      let iframe = document.createElement("iframe");
-      iframe.style.width = "640px";
-      iframe.style.height = "450px";
-      iframe.style.border = "0px";
-      iframe.src = [
-        "https://www.youtube.com/embed/",
-        id,
-        "?rel=0&autoplay=1&mute=1",
-      ].join("");
-      div.appendChild(iframe);
-
-      let object = new CSS3DObject(div);
-      object.position.set(x, y, z);
-      object.rotation.y = ry;
-      return object;
-    };
-
-    // add the YouTube wall to the scene
-    const css3dScene = new THREE.Scene(); // separate scene for CSS3DRenderer objects
-    css3dScene.add(createYouTubeWall("B0J27sf9N1Y", 530, 200, -130, 55)); // position of wall, youtube video id, left/right of user, up/down of user, front/back of user, rotation of wall.
 
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
     scene.add(ambientLight);
@@ -187,6 +230,9 @@ const GameScene = () => {
             break;
           case "KeyD":
             moveRight = true;
+            break;
+          case "KeyQ":
+            // TODO: toggle menu for changing video URL
             break;
           default:
             break;
@@ -253,23 +299,82 @@ const GameScene = () => {
 
       prevTime = time;
       renderer.render(scene, camera);
-      css3dRenderer.render(css3dScene, camera); // render youtube wall
+
+      // check if youtube wall exists before rendering for url changes
+      if (css3dRenderer) {
+        css3dRenderer.render(css3dScene, camera);
+      }
     };
     animate();
 
     return () => {
       clearInterval(positionInterval);
-      ws.close();
+      wsRef.current.close();
       mountRef.current.removeChild(renderer.domElement);
       document.removeEventListener("keydown", (event) => {});
       document.removeEventListener("keyup", (event) => {});
     };
   }, [peers]);
 
+  // i know im using react but im putting this component here cause im lazy and dont want to deal with hooks
+  const VideoMenu = () => {
+    const [videoUrl, setVideoUrl] = useState("");
+
+    const handleVideoChange = (event) => {
+      setVideoUrl(event.target.value);
+    };
+
+    const handleSubmit = () => {
+      // extract video ID from the URL
+      const videoIdMatch = videoUrl.match(
+        /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+      );
+      if (videoIdMatch && videoIdMatch[1]) {
+        const videoId = videoIdMatch[1];
+        console.log("Sending video ID to websocket server:", videoId);
+
+        // send the video ID to the WebSocket server
+        wsRef.current.send(JSON.stringify({ type: "updateVideo", videoId }));
+
+        // update video client side
+        updateVideo(videoId);
+
+        // reset the video URL input after sending
+        setVideoUrl("");
+      } else {
+        console.log("Invalid YouTube URL");
+      }
+    };
+
+    return (
+      <div
+        style={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          background: "white",
+          padding: "20px",
+          borderRadius: "5px",
+          boxShadow: "0px 0px 10px rgba(0, 0, 0, 0.5)",
+        }}
+      >
+        <input
+          type="text"
+          value={videoUrl}
+          onChange={handleVideoChange}
+          placeholder="Enter full YouTube video URL"
+        />
+        <button onClick={handleSubmit}>Submit</button>
+      </div>
+    );
+  };
+
   return (
     <div style={{ position: "relative", width: "100%", height: "100vh" }}>
       <div ref={mountRef} style={{ width: "100%", height: "100%" }}></div>
       <div ref={css3dMountRef}></div>
+      <VideoMenu />
     </div>
   );
 };
