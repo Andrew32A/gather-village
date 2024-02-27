@@ -19,7 +19,7 @@ const GameScene = () => {
   const updatePositionTickRate = 20; // in milliseconds
   let positionIntervalRef = useRef(null);
 
-  const [isVideoMenuVisible, setIsVideoMenuVisible] = useState(false);
+  const videoMenuVisibilityRef = useRef(false);
   const youtubeWallRef = useRef(null);
 
   // TODO: raise up wall for better immersion, need to update blender model first to hide skybox
@@ -45,6 +45,18 @@ const GameScene = () => {
         youtubeWallRZ
       )
     );
+  };
+
+  // toggle video menu for youtube url input, needed to use a useRef instead of useState so the youtube wall wouldn't reset. i know this is against react, but it works for now
+  const toggleVideoMenu = () => {
+    videoMenuVisibilityRef.current = !videoMenuVisibilityRef.current;
+    const menuElement = document.getElementById("video-menu");
+
+    if (menuElement) {
+      menuElement.style.display = videoMenuVisibilityRef.current
+        ? "block"
+        : "none";
+    }
   };
 
   // init YouTube wall
@@ -295,9 +307,9 @@ const GameScene = () => {
             moveRight = true;
             break;
           case "KeyQ":
-            setIsVideoMenuVisible((prev) => !prev);
+            toggleVideoMenu();
             // unlock the pointer if the video menu is opened
-            if (isVideoMenuVisible) {
+            if (videoMenuVisibilityRef.current) {
               controls.unlock();
             }
             break;
@@ -415,7 +427,9 @@ const GameScene = () => {
 
     return (
       <div
+        id="video-menu"
         style={{
+          display: "none",
           position: "absolute",
           top: "50%",
           left: "50%",
@@ -441,7 +455,7 @@ const GameScene = () => {
     <div style={{ position: "relative", width: "100%", height: "100vh" }}>
       <div ref={mountRef} style={{ width: "100%", height: "100%" }}></div>
       <div ref={css3dMountRef}></div>
-      {isVideoMenuVisible && <VideoMenu />}
+      <VideoMenu />
     </div>
   );
 };
