@@ -16,12 +16,13 @@ const GameScene = () => {
   const [peers, setPeers] = useState({});
   const otherPlayers = useRef({});
   const lastPositionSentRef = useRef({ x: 0, y: 0, z: 0 });
+  const updatePositionTickRate = 20; // in milliseconds
   let positionIntervalRef = useRef(null);
 
   const [isVideoMenuVisible, setIsVideoMenuVisible] = useState(false);
   const youtubeWallRef = useRef(null);
 
-  // TODO: raise up wall for better immersion
+  // TODO: raise up wall for better immersion, need to update blender model first to hide skybox
   const youtubeWallX = 530; // left/right of user
   const youtubeWallY = 200; // up/down of user
   const youtubeWallZ = -130; // front/back of user
@@ -213,8 +214,11 @@ const GameScene = () => {
       }
     };
 
-    // tick rate for sending position updates, 100ms by default
-    positionIntervalRef.current = setInterval(sendPosition, 100);
+    // initial tick, main one is called below
+    positionIntervalRef.current = setInterval(
+      sendPosition,
+      updatePositionTickRate
+    );
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
@@ -263,8 +267,11 @@ const GameScene = () => {
     document.addEventListener(
       "keydown",
       (event) => {
-        // tick rate for sending position updates, 100ms by default
-        positionIntervalRef.current = setInterval(sendPosition, 20);
+        // tick rate for sending position updates
+        positionIntervalRef.current = setInterval(
+          sendPosition,
+          updatePositionTickRate
+        );
         switch (event.code) {
           case "KeyW":
             moveForward = true;
