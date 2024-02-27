@@ -56,7 +56,7 @@ const GameScene = () => {
   css3dScene.add(createYouTubeWall("LDU_Txk06tM", 530, 200, -130, 55));
 
   useEffect(() => {
-    wsRef.current = new WebSocket("ws://localhost:8080");
+    wsRef.current = new WebSocket("ws://localhost:8080"); // local: ws://localhost:8080
     wsRef.current.onopen = () => {
       console.log("Connected to the signaling server");
     };
@@ -97,6 +97,7 @@ const GameScene = () => {
     // main function to handle incoming messages
     const handleMessage = (message) => {
       const handleData = (data) => {
+        // TODO: add pop up message for when a new player joins w/ their name
         switch (data.type) {
           case "signal":
             handleSignalData(data);
@@ -239,7 +240,7 @@ const GameScene = () => {
       "keydown",
       (event) => {
         // tick rate for sending position updates, 100ms by default
-        positionIntervalRef = setInterval(sendPosition, 20);
+        positionIntervalRef.current = setInterval(sendPosition, 20);
         switch (event.code) {
           case "KeyW":
             moveForward = true;
