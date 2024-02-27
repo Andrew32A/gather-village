@@ -15,6 +15,9 @@ const GameScene = () => {
   const [peers, setPeers] = useState({});
   const otherPlayers = useRef({});
   const youtubeWallRef = useRef(null);
+  const [isVideoMenuVisible, setIsVideoMenuVisible] = useState(false);
+  let positionIntervalRef = useRef(null);
+  const lastPositionSentRef = useRef({ x: 0, y: 0, z: 0 });
 
   // update video in the scene
   const updateVideo = (videoId) => {
@@ -93,7 +96,6 @@ const GameScene = () => {
 
     // main function to handle incoming messages
     const handleMessage = (message) => {
-      console.log("IS THIS WORKING?!?!");
       const handleData = (data) => {
         switch (data.type) {
           case "signal":
@@ -152,24 +154,42 @@ const GameScene = () => {
     };
 
     const sendPosition = () => {
-      if (wsRef.current.readyState === WebSocket.OPEN) {
-        const position = controls.getObject().position;
-        wsRef.current.send(
-          JSON.stringify({
-            type: "updatePosition",
-            position: { x: position.x, y: position.y, z: position.z },
-          })
-        );
-      } else {
-        console.log(
-          "WebSocket is not open. ReadyState:",
-          wsRef.current.readyState
-        );
+      const currentPosition = controls.getObject().position;
+      const lastPosition = lastPositionSentRef.current;
+
+      // round the position to the nearest 0.001th to avoid sending lingering messages after the user stops moving
+      const roundedPosition = {
+        x: parseFloat(currentPosition.x.toFixed(3)),
+        y: parseFloat(currentPosition.y.toFixed(3)),
+        z: parseFloat(currentPosition.z.toFixed(3)),
+      };
+
+      // check if the position has changed
+      if (
+        roundedPosition.x !== lastPosition.x ||
+        roundedPosition.y !== lastPosition.y ||
+        roundedPosition.z !== lastPosition.z
+      ) {
+        if (wsRef.current.readyState === WebSocket.OPEN) {
+          wsRef.current.send(
+            JSON.stringify({
+              type: "updatePosition",
+              position: roundedPosition,
+            })
+          );
+          // update the last sent position
+          lastPositionSentRef.current = roundedPosition;
+        } else {
+          console.log(
+            "WebSocket is not open. ReadyState:",
+            wsRef.current.readyState
+          );
+        }
       }
     };
 
     // tick rate for sending position updates, 100ms by default
-    const positionInterval = setInterval(sendPosition, 100);
+    positionIntervalRef.current = setInterval(sendPosition, 100);
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
@@ -218,6 +238,8 @@ const GameScene = () => {
     document.addEventListener(
       "keydown",
       (event) => {
+        // tick rate for sending position updates, 100ms by default
+        positionIntervalRef = setInterval(sendPosition, 20);
         switch (event.code) {
           case "KeyW":
             moveForward = true;
@@ -232,7 +254,11 @@ const GameScene = () => {
             moveRight = true;
             break;
           case "KeyQ":
-            // TODO: toggle menu for changing video URL
+            setIsVideoMenuVisible((prev) => !prev);
+            // unlock the pointer if the video menu is opened
+            if (isVideoMenuVisible) {
+              controls.unlock();
+            }
             break;
           default:
             break;
@@ -308,7 +334,7 @@ const GameScene = () => {
     animate();
 
     return () => {
-      clearInterval(positionInterval);
+      clearInterval(positionIntervalRef.current);
       wsRef.current.close();
       mountRef.current.removeChild(renderer.domElement);
       document.removeEventListener("keydown", (event) => {});
@@ -374,7 +400,7 @@ const GameScene = () => {
     <div style={{ position: "relative", width: "100%", height: "100vh" }}>
       <div ref={mountRef} style={{ width: "100%", height: "100%" }}></div>
       <div ref={css3dMountRef}></div>
-      <VideoMenu />
+      {isVideoMenuVisible && <VideoMenu />}
     </div>
   );
 };
