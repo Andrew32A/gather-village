@@ -26,7 +26,9 @@ const GameScene = () => {
   const youtubeWallX = 530; // left/right of user
   const youtubeWallY = 200; // up/down of user
   const youtubeWallZ = -130; // front/back of user
-  const youtubeWallRY = 55; // rotation of wall
+  const youtubeWallRY = 55; // rotation of wall, 0 is facing user, 55 is 90 degrees clockwise
+  const youtubeWallRX = 0; // rotation of wall, makes it crooked
+  const youtubeWallRZ = 0; // rotation of wall, makes it crooked too
 
   // update video in the scene
   const updateVideo = (videoId) => {
@@ -38,13 +40,15 @@ const GameScene = () => {
         youtubeWallX,
         youtubeWallY,
         youtubeWallZ,
-        youtubeWallRY
+        youtubeWallRY,
+        youtubeWallRX,
+        youtubeWallRZ
       )
     );
   };
 
   // init YouTube wall
-  const createYouTubeWall = (id, x, y, z, ry) => {
+  const createYouTubeWall = (id, x, y, z, ry, rx, rz) => {
     let div, iframe;
     if (youtubeWallRef.current) {
       iframe = youtubeWallRef.current.element.querySelector("iframe");
@@ -64,6 +68,9 @@ const GameScene = () => {
       let object = new CSS3DObject(div);
       object.position.set(x, y, z);
       object.rotation.y = ry;
+      object.rotation.x = rx;
+      object.rotation.z = rz;
+
       youtubeWallRef.current = object;
       return object;
     }
@@ -76,7 +83,9 @@ const GameScene = () => {
       youtubeWallX,
       youtubeWallY,
       youtubeWallZ,
-      youtubeWallRY
+      youtubeWallRY,
+      youtubeWallRX,
+      youtubeWallRZ
     )
   );
 
