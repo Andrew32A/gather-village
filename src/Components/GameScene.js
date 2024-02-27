@@ -83,7 +83,7 @@ const GameScene = () => {
   useEffect(() => {
     wsRef.current = new WebSocket("wss://gather-village.onrender.com"); // local: ws://localhost:8080
     wsRef.current.onopen = () => {
-      console.log("Connected to the signaling server");
+      console.log("Successfully connected to the signaling server! :D");
     };
 
     // handle signaling for peers

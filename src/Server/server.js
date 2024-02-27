@@ -17,4 +17,4 @@ wss.on("connection", function connection(ws) {
   });
 });
 
-console.log("Signaling server running on ws://localhost:8080");
+console.log("Successfully started signaling server! :D");
