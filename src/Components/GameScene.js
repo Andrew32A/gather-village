@@ -420,6 +420,9 @@ const GameScene = () => {
 
         // reset the video URL input after sending
         setVideoUrl("");
+
+        // hide the video menu
+        toggleVideoMenu();
       } else {
         console.log("Invalid YouTube URL");
       }
