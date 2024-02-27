@@ -56,7 +56,7 @@ const GameScene = () => {
   css3dScene.add(createYouTubeWall("LDU_Txk06tM", 530, 200, -130, 55));
 
   useEffect(() => {
-    wsRef.current = new WebSocket("ws://localhost:8080"); // local: ws://localhost:8080
+    wsRef.current = new WebSocket("wss://gather-village.onrender.com"); // local: ws://localhost:8080
     wsRef.current.onopen = () => {
       console.log("Connected to the signaling server");
     };
