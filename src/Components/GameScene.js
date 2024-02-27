@@ -12,18 +12,34 @@ const GameScene = () => {
   const wsRef = useRef(null);
   const mountRef = useRef(null);
   const css3dMountRef = useRef(null);
+
   const [peers, setPeers] = useState({});
   const otherPlayers = useRef({});
-  const youtubeWallRef = useRef(null);
-  const [isVideoMenuVisible, setIsVideoMenuVisible] = useState(false);
-  let positionIntervalRef = useRef(null);
   const lastPositionSentRef = useRef({ x: 0, y: 0, z: 0 });
+  let positionIntervalRef = useRef(null);
+
+  const [isVideoMenuVisible, setIsVideoMenuVisible] = useState(false);
+  const youtubeWallRef = useRef(null);
+
+  // TODO: raise up wall for better immersion
+  const youtubeWallX = 530; // left/right of user
+  const youtubeWallY = 200; // up/down of user
+  const youtubeWallZ = -130; // front/back of user
+  const youtubeWallRY = 55; // rotation of wall
 
   // update video in the scene
   const updateVideo = (videoId) => {
     console.log("||RECEIVED|| video ID, updating YouTube video:", videoId);
     // css3dScene.remove(youtubeWallRef.current); // apparently i dont need this... AND IT WORKS NOW! WOOOOOOOOOOOO!!!!! you have no idea the pain and tears this caused me
-    css3dScene.add(createYouTubeWall(videoId, 530, 200, -130, 55));
+    css3dScene.add(
+      createYouTubeWall(
+        videoId,
+        youtubeWallX,
+        youtubeWallY,
+        youtubeWallZ,
+        youtubeWallRY
+      )
+    );
   };
 
   // init YouTube wall
@@ -53,7 +69,15 @@ const GameScene = () => {
   };
 
   const css3dScene = new THREE.Scene();
-  css3dScene.add(createYouTubeWall("LDU_Txk06tM", 530, 200, -130, 55));
+  css3dScene.add(
+    createYouTubeWall(
+      "LDU_Txk06tM",
+      youtubeWallX,
+      youtubeWallY,
+      youtubeWallZ,
+      youtubeWallRY
+    )
+  );
 
   useEffect(() => {
     wsRef.current = new WebSocket("wss://gather-village.onrender.com"); // local: ws://localhost:8080
