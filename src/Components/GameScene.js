@@ -22,9 +22,9 @@ const GameScene = () => {
   const videoMenuVisibilityRef = useRef(false);
   const youtubeWallRef = useRef(null);
 
-  // TODO: raise up wall for better immersion, need to update blender model first to hide skybox
+  // youtube wall global position and rotation
   const youtubeWallX = 530; // left/right of user
-  const youtubeWallY = 200; // up/down of user
+  const youtubeWallY = 350; // up/down of user
   const youtubeWallZ = -130; // front/back of user
   const youtubeWallRY = 55; // rotation of wall, 0 is facing user, 55 is 90 degrees clockwise
   const youtubeWallRX = 0; // rotation of wall, makes it crooked
@@ -250,7 +250,8 @@ const GameScene = () => {
     );
     const renderer = new THREE.WebGLRenderer({ alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.physicallyCorrectLights = true; // for more realistic lighting?
+    renderer.physicallyCorrectLights = true; // for more realistic lighting? i dont know if this is actually doing anything
+    renderer.shadowMap.enabled = true; // ensables shadows? again, doesnt seem to do anything... need to fix this
     mountRef.current.appendChild(renderer.domElement);
 
     const css3dRenderer = new CSS3DRenderer();
@@ -264,12 +265,14 @@ const GameScene = () => {
 
     document.addEventListener("click", () => controls.lock(), false);
 
-    // adds world lighting, took me way too long to find this out... i was messing around with blender lighting and wonky gltf exports for way too long
-    const ambientLight = new THREE.AmbientLight(0xffffff, 10);
+    // adds global lighting, took me way too long to find this out... i was messing around with blender lighting and wonky gltf exports for way too long
+    const ambientLight = new THREE.AmbientLight(0xffffff, 5);
     scene.add(ambientLight);
 
-    const pointLight = new THREE.PointLight(0xffffff, 1, 100);
-    pointLight.position.set(10, 10, 10);
+    // TODO: fix this, shadows and light dont seem to be displaying properly
+    const pointLight = new THREE.PointLight(0xffffff, 1, 10);
+    pointLight.position.set(0, 10, 10);
+    ambientLight.castShadow = true;
     scene.add(pointLight);
 
     let playerModel = new THREE.Mesh(
