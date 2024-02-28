@@ -9,6 +9,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import Peer from "simple-peer";
 
 const GameScene = () => {
+  const debugMode = true; // enable/disable debug messages
   const wsRef = useRef(null);
   const mountRef = useRef(null);
   const css3dMountRef = useRef(null);
@@ -17,8 +18,10 @@ const GameScene = () => {
   const [peers, setPeers] = useState({});
   const otherPlayers = useRef({});
   const lastPositionSentRef = useRef({ x: 0, y: 0, z: 0 });
-  const updatePositionTickRate = 75; // in milliseconds
+  const updatePositionTickRate = 20; // in milliseconds
   let positionIntervalRef = useRef(null);
+  let isPlayerAbleToMove = useRef(true);
+  let isPlayerStopped = useRef(null);
 
   const videoMenuVisibilityRef = useRef(false);
   const youtubeWallRef = useRef(null);
@@ -33,7 +36,9 @@ const GameScene = () => {
 
   // update video in the scene
   const updateVideo = (videoId) => {
-    console.log("||RECEIVED|| video ID, updating YouTube video:", videoId); // debug
+    if (debugMode) {
+      console.log("||RECEIVED|| video ID, updating YouTube video:", videoId);
+    }
     // css3dScene.remove(youtubeWallRef.current); // apparently i dont need this... AND IT WORKS NOW! WOOOOOOOOOOOO!!!!! you have no idea the pain and tears this caused me
     css3dScene.add(
       createYouTubeWall(
@@ -158,7 +163,9 @@ const GameScene = () => {
             handleUpdatePosition(data); // display player for initial spawn position
             break;
           case "updatePosition":
+            // if (debugMode) {
             // console.log("||RECEIVED|| position update:", data); // debug, commented out to avoid spam
+            // }
             handleUpdatePosition(data);
             break;
           default:
@@ -204,9 +211,11 @@ const GameScene = () => {
     };
 
     const sendPosition = () => {
+      if (debugMode) {
+        console.log("Calling send position start");
+      }
       const currentPosition = controls.getObject().position;
       const lastPosition = lastPositionSentRef.current;
-      // console.log("Sending position to server", currentPosition); debug
 
       // round the position to the nearest 0.001th to avoid sending lingering messages after the user stops moving
       const roundedPosition = {
@@ -223,10 +232,13 @@ const GameScene = () => {
       ) {
         const trySendPosition = () => {
           if (wsRef.current.readyState === WebSocket.OPEN) {
+            if (debugMode) {
+              console.log("Try send position", currentPosition);
+            }
             wsRef.current.send(
               JSON.stringify({
                 type: "updatePosition",
-                position: roundedPosition,
+                position: currentPosition,
               })
             );
             // update the last sent position
@@ -249,12 +261,17 @@ const GameScene = () => {
         };
 
         trySendPosition();
-        // console.log("Sent position:", roundedPosition); // debug
+        if (debugMode) {
+          console.log("Sent position at end:", roundedPosition);
+        }
       }
     };
 
     // only set up the interval when movement starts
     const startSendingPosition = () => {
+      isPlayerAbleToMove.current = true;
+      clearInterval(isPlayerStopped.current); // clear existing interval to avoid duplicates
+
       // clear existing interval to avoid duplicates
       if (positionIntervalRef.current) {
         clearInterval(positionIntervalRef.current);
@@ -267,18 +284,29 @@ const GameScene = () => {
 
     // stop sending position when there's no movement
     const stopSendingPosition = () => {
-      if (positionIntervalRef.current) {
-        clearInterval(positionIntervalRef.current);
-        positionIntervalRef.current = null; // clear the reference
+      // if (positionIntervalRef.current) {
+      // wait 1 second for smoothness
+      isPlayerAbleToMove.current = false;
+      if (!isPlayerAbleToMove.current) {
+        isPlayerStopped.current = setTimeout(() => {
+          if (debugMode) {
+            console.log("Stopping position updates");
+          }
+          clearInterval(positionIntervalRef.current);
+          positionIntervalRef.current = null; // clear the reference
+          isPlayerAbleToMove.current = true;
+        }, 1000);
       }
+      // }
     };
 
+    // TODO: fix this, it's not working as intended. the position updates are being sent but the other players arn't able to handle this data yet
     // update player position every 2 seconds so those who log in will load other players. could also listen out for new peers and send their position but this felt more consistent
-    const playerPositionPersist = function () {
-      setInterval(sendPosition, 2000);
-    };
+    // const playerPositionPersist = function () {
+    //   setInterval(sendPosition, 500);
+    // };
 
-    playerPositionPersist();
+    // playerPositionPersist();
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
@@ -383,9 +411,14 @@ const GameScene = () => {
           default:
             break;
         }
-        if (!moveForward && !moveBackward && !moveLeft && !moveRight) {
+        if (
+          !moveForward &&
+          !moveBackward &&
+          !moveLeft &&
+          !moveRight &&
+          isPlayerAbleToMove.current
+        ) {
           // if no movement keys are pressed, stop sending position
-          console.log("Stopping position updates");
           stopSendingPosition();
         }
       },
