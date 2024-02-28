@@ -16,7 +16,7 @@ const GameScene = () => {
   const [peers, setPeers] = useState({});
   const otherPlayers = useRef({});
   const lastPositionSentRef = useRef({ x: 0, y: 0, z: 0 });
-  const updatePositionTickRate = 20; // in milliseconds
+  const updatePositionTickRate = 75; // in milliseconds
   let positionIntervalRef = useRef(null);
 
   const videoMenuVisibilityRef = useRef(false);
