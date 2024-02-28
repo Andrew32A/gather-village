@@ -206,6 +206,7 @@ const GameScene = () => {
     const sendPosition = () => {
       const currentPosition = controls.getObject().position;
       const lastPosition = lastPositionSentRef.current;
+      // console.log("Sending position to server", currentPosition); debug
 
       // round the position to the nearest 0.001th to avoid sending lingering messages after the user stops moving
       const roundedPosition = {
@@ -248,14 +249,36 @@ const GameScene = () => {
         };
 
         trySendPosition();
+        // console.log("Sent position:", roundedPosition); // debug
       }
     };
 
-    // initial tick, main one is called below
-    positionIntervalRef.current = setInterval(
-      sendPosition,
-      updatePositionTickRate
-    );
+    // only set up the interval when movement starts
+    const startSendingPosition = () => {
+      // clear existing interval to avoid duplicates
+      if (positionIntervalRef.current) {
+        clearInterval(positionIntervalRef.current);
+      }
+      positionIntervalRef.current = setInterval(
+        sendPosition,
+        updatePositionTickRate
+      );
+    };
+
+    // stop sending position when there's no movement
+    const stopSendingPosition = () => {
+      if (positionIntervalRef.current) {
+        clearInterval(positionIntervalRef.current);
+        positionIntervalRef.current = null; // clear the reference
+      }
+    };
+
+    // update player position every 2 seconds so those who log in will load other players. could also listen out for new peers and send their position but this felt more consistent
+    const playerPositionPersist = function () {
+      setInterval(sendPosition, 2000);
+    };
+
+    playerPositionPersist();
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
@@ -314,11 +337,7 @@ const GameScene = () => {
     document.addEventListener(
       "keydown",
       (event) => {
-        // tick rate for sending position updates
-        positionIntervalRef.current = setInterval(
-          sendPosition,
-          updatePositionTickRate
-        );
+        startSendingPosition();
         switch (event.code) {
           case "KeyW":
             moveForward = true;
@@ -363,6 +382,11 @@ const GameScene = () => {
             break;
           default:
             break;
+        }
+        if (!moveForward && !moveBackward && !moveLeft && !moveRight) {
+          // if no movement keys are pressed, stop sending position
+          console.log("Stopping position updates");
+          stopSendingPosition();
         }
       },
       false
