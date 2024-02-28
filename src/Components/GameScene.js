@@ -217,21 +217,28 @@ const GameScene = () => {
         roundedPosition.y !== lastPosition.y ||
         roundedPosition.z !== lastPosition.z
       ) {
-        if (wsRef.current.readyState === WebSocket.OPEN) {
-          wsRef.current.send(
-            JSON.stringify({
-              type: "updatePosition",
-              position: roundedPosition,
-            })
-          );
-          // update the last sent position
-          lastPositionSentRef.current = roundedPosition;
-        } else {
-          console.log(
-            "WebSocket is not open. ReadyState:",
-            wsRef.current.readyState
-          );
-        }
+        const trySendPosition = () => {
+          if (wsRef.current.readyState === WebSocket.OPEN) {
+            wsRef.current.send(
+              JSON.stringify({
+                type: "updatePosition",
+                position: roundedPosition,
+              })
+            );
+            // update the last sent position
+            lastPositionSentRef.current = roundedPosition;
+          } else {
+            console.log(
+              "WebSocket is not open. ReadyState:",
+              wsRef.current.readyState,
+              ". Retrying in 2 seconds..."
+            );
+            // retry after 2 seconds if WebSocket isn't open
+            setTimeout(trySendPosition, 2000);
+          }
+        };
+
+        trySendPosition();
       }
     };
 
