@@ -250,6 +250,7 @@ const GameScene = () => {
     );
     const renderer = new THREE.WebGLRenderer({ alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.physicallyCorrectLights = true; // for more realistic lighting?
     mountRef.current.appendChild(renderer.domElement);
 
     const css3dRenderer = new CSS3DRenderer();
@@ -263,7 +264,8 @@ const GameScene = () => {
 
     document.addEventListener("click", () => controls.lock(), false);
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
+    // adds world lighting, took me way too long to find this out... i was messing around with blender lighting and wonky gltf exports for way too long
+    const ambientLight = new THREE.AmbientLight(0xffffff, 10);
     scene.add(ambientLight);
 
     const pointLight = new THREE.PointLight(0xffffff, 1, 100);
