@@ -12,6 +12,7 @@ const GameScene = () => {
   const wsRef = useRef(null);
   const mountRef = useRef(null);
   const css3dMountRef = useRef(null);
+  const allowRetryRef = useRef(true);
 
   const [peers, setPeers] = useState({});
   const otherPlayers = useRef({});
@@ -227,19 +228,20 @@ const GameScene = () => {
             );
             // update the last sent position
             lastPositionSentRef.current = roundedPosition;
-          } else {
+          } else if (allowRetryRef.current) {
             console.log(
               "WebSocket is not open. ReadyState:",
               wsRef.current.readyState,
               ". Retrying in 2 seconds..."
             );
-            // clear any existing timeout to prevent multiple retries stacking
-            if (positionIntervalRef.current) {
-              clearTimeout(positionIntervalRef.current);
-              positionIntervalRef.current = null;
-            }
-            // retry after 2 seconds if WebSocket isn't open
-            positionIntervalRef.current = setTimeout(trySendPosition, 2000);
+            // prevent further retries until this one completes
+            allowRetryRef.current = false;
+
+            // schedule a retry in 2 seconds
+            setTimeout(() => {
+              allowRetryRef.current = true; // re-enable retries
+              trySendPosition(); // attempt to send the position again
+            }, 2000);
           }
         };
 
