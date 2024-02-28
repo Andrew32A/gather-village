@@ -18,7 +18,7 @@ const GameScene = () => {
   const [peers, setPeers] = useState({});
   const otherPlayers = useRef({});
   const lastPositionSentRef = useRef({ x: 0, y: 0, z: 0 });
-  const updatePositionTickRate = 20; // in milliseconds
+  const updatePositionTickRate = 30; // in milliseconds
   let positionIntervalRef = useRef(null);
   let isPlayerAbleToMove = useRef(true);
   let isPlayerStopped = useRef(null);
@@ -27,12 +27,12 @@ const GameScene = () => {
   const youtubeWallRef = useRef(null);
 
   // youtube wall global position and rotation
-  const youtubeWallX = 530; // left/right of user
-  const youtubeWallY = 350; // up/down of user
-  const youtubeWallZ = -130; // front/back of user
-  const youtubeWallRY = 55; // rotation of wall, 0 is facing user, 55 is 90 degrees clockwise
-  const youtubeWallRX = 0; // rotation of wall, makes it crooked
-  const youtubeWallRZ = 0; // rotation of wall, makes it crooked too
+  const youtubeWallX = -100; // left/right of user
+  const youtubeWallY = 450; // up/down of user
+  const youtubeWallZ = -450; // front/back of user
+  const youtubeWallRY = 0; // rotation of wall, 0 is facing user, 55 is 90 degrees clockwise
+  const youtubeWallRX = 0.5; // rotation of wall, points down
+  const youtubeWallRZ = 0; // rotation of wall
 
   // update video in the scene
   const updateVideo = (videoId) => {
@@ -72,11 +72,11 @@ const GameScene = () => {
       iframe.src = `https://www.youtube.com/embed/${id}?rel=0&autoplay=1&mute=1`;
     } else {
       div = document.createElement("div");
-      div.style.width = "500px";
-      div.style.height = "450px";
+      div.style.width = "800px";
+      div.style.height = "650px";
       iframe = document.createElement("iframe");
-      iframe.style.width = "640px";
-      iframe.style.height = "450px";
+      iframe.style.width = "840px";
+      iframe.style.height = "650px";
       iframe.style.border = "0px";
       iframe.src = `https://www.youtube.com/embed/${id}?rel=0&autoplay=1&mute=1`;
       div.appendChild(iframe);
