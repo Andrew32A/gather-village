@@ -251,7 +251,6 @@ const GameScene = () => {
     const renderer = new THREE.WebGLRenderer({ alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.physicallyCorrectLights = true; // for more realistic lighting? i dont know if this is actually doing anything
-    renderer.shadowMap.enabled = true; // ensables shadows? again, doesnt seem to do anything... need to fix this
     mountRef.current.appendChild(renderer.domElement);
 
     const css3dRenderer = new CSS3DRenderer();
@@ -268,6 +267,12 @@ const GameScene = () => {
     // adds global lighting, took me way too long to find this out... i was messing around with blender lighting and wonky gltf exports for way too long
     const ambientLight = new THREE.AmbientLight(0xffffff, 5);
     scene.add(ambientLight);
+
+    // directional lighting for shadows
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 5);
+    directionalLight.position.set(0, 10, 10);
+    directionalLight.castShadow = true; // wnable shadow casting for the light
+    scene.add(directionalLight);
 
     // TODO: fix this, shadows and light dont seem to be displaying properly
     const pointLight = new THREE.PointLight(0xffffff, 1, 10);
