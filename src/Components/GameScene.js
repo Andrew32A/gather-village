@@ -233,8 +233,13 @@ const GameScene = () => {
               wsRef.current.readyState,
               ". Retrying in 2 seconds..."
             );
+            // clear any existing timeout to prevent multiple retries stacking
+            if (positionIntervalRef.current) {
+              clearTimeout(positionIntervalRef.current);
+              positionIntervalRef.current = null;
+            }
             // retry after 2 seconds if WebSocket isn't open
-            setTimeout(trySendPosition, 2000);
+            positionIntervalRef.current = setTimeout(trySendPosition, 2000);
           }
         };
 
