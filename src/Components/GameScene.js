@@ -36,9 +36,7 @@ const GameScene = () => {
 
   // update video in the scene
   const updateVideo = (videoId) => {
-    if (debugMode) {
-      console.log("||RECEIVED|| video ID, updating YouTube video:", videoId);
-    }
+    console.log("||RECEIVED|| video ID, updating YouTube video:", videoId);
     // css3dScene.remove(youtubeWallRef.current); // apparently i dont need this... AND IT WORKS NOW! WOOOOOOOOOOOO!!!!! you have no idea the pain and tears this caused me
     css3dScene.add(
       createYouTubeWall(
@@ -284,7 +282,6 @@ const GameScene = () => {
 
     // stop sending position when there's no movement
     const stopSendingPosition = () => {
-      // if (positionIntervalRef.current) {
       // wait 1 second for smoothness
       isPlayerAbleToMove.current = false;
       if (!isPlayerAbleToMove.current) {
@@ -297,7 +294,6 @@ const GameScene = () => {
           isPlayerAbleToMove.current = true;
         }, 1000);
       }
-      // }
     };
 
     // TODO: fix this, it's not working as intended. the position updates are being sent but the other players arn't able to handle this data yet
@@ -338,7 +334,7 @@ const GameScene = () => {
     // directional lighting for shadows
     const directionalLight = new THREE.DirectionalLight(0xffffff, 5);
     directionalLight.position.set(0, 10, 10);
-    directionalLight.castShadow = true; // wnable shadow casting for the light
+    directionalLight.castShadow = true; // enable shadow casting for the light
     scene.add(directionalLight);
 
     // TODO: fix this, shadows and light dont seem to be displaying properly
@@ -347,6 +343,7 @@ const GameScene = () => {
     ambientLight.castShadow = true;
     scene.add(pointLight);
 
+    // user player model
     let playerModel = new THREE.Mesh(
       new THREE.BoxGeometry(1, 1, 1),
       new THREE.MeshBasicMaterial({ color: 0xffffff })
@@ -354,6 +351,7 @@ const GameScene = () => {
     scene.add(playerModel);
     playerModel.position.set(0, -1, -5);
 
+    // controls
     let moveForward = false;
     let moveBackward = false;
     let moveLeft = false;
@@ -424,6 +422,8 @@ const GameScene = () => {
       },
       false
     );
+
+    // load the gltf model
     const loader = new GLTFLoader();
     loader.load(
       "Models/scene.gltf",
@@ -470,6 +470,7 @@ const GameScene = () => {
     animate();
 
     return () => {
+      // cleanup
       clearInterval(positionIntervalRef.current);
       wsRef.current.close();
       mountRef.current.removeChild(renderer.domElement);
