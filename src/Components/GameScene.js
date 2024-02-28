@@ -33,7 +33,7 @@ const GameScene = () => {
 
   // update video in the scene
   const updateVideo = (videoId) => {
-    console.log("||RECEIVED|| video ID, updating YouTube video:", videoId);
+    console.log("||RECEIVED|| video ID, updating YouTube video:", videoId); // debug
     // css3dScene.remove(youtubeWallRef.current); // apparently i dont need this... AND IT WORKS NOW! WOOOOOOOOOOOO!!!!! you have no idea the pain and tears this caused me
     css3dScene.add(
       createYouTubeWall(
@@ -148,15 +148,17 @@ const GameScene = () => {
         switch (data.type) {
           case "signal":
             handleSignalData(data);
+            handleUpdatePosition(data); // display player for initial spawn position
             break;
           case "updateVideo":
             updateVideo(data.videoId);
             break;
           case "new-peer":
             handleNewPeer(data);
+            handleUpdatePosition(data); // display player for initial spawn position
             break;
           case "updatePosition":
-            console.log("||RECEIVED|| position update:", data);
+            // console.log("||RECEIVED|| position update:", data); // debug, commented out to avoid spam
             handleUpdatePosition(data);
             break;
           default:
