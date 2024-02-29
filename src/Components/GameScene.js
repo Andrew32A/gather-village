@@ -9,7 +9,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import Peer from "simple-peer";
 
 const GameScene = () => {
-  const debugMode = true; // enable/disable debug messages
+  const debugMode = false; // enable/disable debug messages
   const wsRef = useRef(null);
   const mountRef = useRef(null);
   const css3dMountRef = useRef(null);
