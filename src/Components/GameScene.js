@@ -109,6 +109,29 @@ const GameScene = () => {
     wsRef.current = new WebSocket("wss://gather-village.onrender.com"); // local: ws://localhost:8080
     wsRef.current.onopen = () => {
       console.log("Successfully connected to the signaling server! :D");
+
+      // send the initial position to the server, may need to refactor this later for DRY code
+      wsRef.current.send(
+        JSON.stringify({
+          type: "updatePosition",
+          position: { x: 0, y: 2, z: 0 },
+        })
+      );
+    };
+    wsRef.onclose = () => {
+      console.log("WebSocket connection closed. Attempting to reconnect...");
+      const ws = new WebSocket("wss://gather-village.onrender.com");
+      ws.onopen = () => {
+        console.log("Successfully reconnected to the signaling server! :D");
+        // re-assign the WebSocket reference to the new connection
+        wsRef.current = ws;
+        // reset reconnection allowance upon successful connection
+        allowRetryRef.current = true;
+      };
+    };
+    wsRef.onerror = (error) => {
+      console.error("WebSocket encountered an error:", error);
+      wsRef.close(); // Close the connection on error to trigger the onclose handler
     };
 
     // handle signaling for peers
@@ -147,11 +170,25 @@ const GameScene = () => {
     // main function to handle incoming messages
     const handleMessage = (message) => {
       const handleData = (data) => {
+        if (debugMode) {
+          console.log("||RECEIVED||:", data);
+        }
         // TODO: add pop up message for when a new player joins w/ their name
         switch (data.type) {
           case "signal":
             handleSignalData(data);
             handleUpdatePosition(data); // display player for initial spawn position
+            // TODO: send the video ID to the new peer
+            // if (youtubeWallRef.current) {
+            //   wsRef.current.send(
+            //     JSON.stringify({
+            //       type: "updateVideo",
+            //       videoId:
+            //         youtubeWallRef.current.element.querySelector("iframe").id,
+            //     })
+            //   );
+            // }
+
             break;
           case "updateVideo":
             updateVideo(data.videoId);
