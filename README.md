@@ -1,7 +1,7 @@
 # Gather Village
 
 <h2 align="center"><a href="https://gather-village.vercel.app/">Click here to try it out!</a></h3>
-<img src="https://github.com/Andrew32A/gather-village/blob/main/resources/public/images/screenshot1.png" align="center">
+<img src="https://github.com/Andrew32A/gather-village/blob/main/public/images/screenshot1.png?raw=true" align="center">
 
 ## Commands to run project locally:
 
