@@ -57,11 +57,12 @@ const GameScene = () => {
   const toggleVideoMenu = () => {
     videoMenuVisibilityRef.current = !videoMenuVisibilityRef.current;
     const menuElement = document.getElementById("video-menu");
+    const overlayElement = document.getElementById("overlay");
 
-    if (menuElement) {
-      menuElement.style.display = videoMenuVisibilityRef.current
-        ? "block"
-        : "none";
+    if (menuElement && overlayElement) {
+      const displayStyle = videoMenuVisibilityRef.current ? "block" : "none";
+      menuElement.style.display = displayStyle;
+      overlayElement.style.display = displayStyle;
     }
   };
 
@@ -192,7 +193,6 @@ const GameScene = () => {
           case "signal":
             handleSignalData(data);
             handleUpdatePosition(data); // display player for initial spawn position
-
             break;
           case "updateVideo":
             updateVideo(data.videoId);
@@ -205,7 +205,7 @@ const GameScene = () => {
             break;
           case "updatePosition":
             // if (debugMode) {
-            // console.log("||RECEIVED|| position update:", data); // debug, commented out to avoid spam
+            // console.log("||RECEIVED|| position update:", data); // debug commented out to avoid spam
             // }
             handleUpdatePosition(data);
             break;
@@ -557,29 +557,83 @@ const GameScene = () => {
       }
     };
 
+    // TODO: move inline styling to proper css file
     return (
-      <div
-        id="video-menu"
-        style={{
-          display: "none",
-          position: "absolute",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          background: "white",
-          padding: "20px",
-          borderRadius: "5px",
-          boxShadow: "0px 0px 10px rgba(0, 0, 0, 0.5)",
-        }}
-      >
-        <input
-          type="text"
-          value={videoUrl}
-          onChange={handleVideoChange}
-          placeholder="Enter full YouTube video URL"
-        />
-        <button onClick={handleSubmit}>Submit</button>
-      </div>
+      <>
+        <div
+          id="overlay"
+          style={{
+            display: "none",
+            position: "fixed",
+            top: "0",
+            left: "0",
+            width: "100%",
+            height: "100%",
+            backgroundColor: "rgba(0,0,0,0.5)",
+            zIndex: "999",
+          }}
+        ></div>
+
+        <div
+          id="video-menu"
+          style={{
+            display: "none",
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            background: "rgba(249, 249, 249, 0.85)",
+            color: "#333",
+            padding: "30px",
+            borderRadius: "8px",
+            boxShadow:
+              "0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08)",
+            width: "auto",
+            maxWidth: "90%",
+            zIndex: "1000",
+            border: "1px solid rgba(0, 0, 0, 0.1)",
+            fontSize: "16px",
+            lineHeight: "1.5",
+          }}
+        >
+          <input
+            type="text"
+            value={videoUrl}
+            onChange={handleVideoChange}
+            placeholder="Paste full YouTube video URL"
+            style={{
+              padding: "10px 15px",
+              fontSize: "16px",
+              borderRadius: "4px",
+              border: "1px solid #ccc",
+              width: "calc(100% - 32px)",
+              marginBottom: "20px",
+              marginRight: "10px",
+            }}
+          />
+          <button
+            onClick={handleSubmit}
+            style={{
+              padding: "10px 15px",
+              fontSize: "16px",
+              borderRadius: "4px",
+              border: "none",
+              backgroundColor: "#007BFF",
+              color: "white",
+              cursor: "pointer",
+              transition: "background-color 0.2s",
+            }}
+            onMouseOver={(e) =>
+              (e.currentTarget.style.backgroundColor = "#0056b3")
+            }
+            onMouseOut={(e) =>
+              (e.currentTarget.style.backgroundColor = "#007BFF")
+            }
+          >
+            Submit
+          </button>
+        </div>
+      </>
     );
   };
 
