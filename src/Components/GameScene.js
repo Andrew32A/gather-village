@@ -348,6 +348,7 @@ const GameScene = () => {
 
     // playerPositionPersist();
 
+    // three.js scene setup
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
       75,
@@ -360,12 +361,14 @@ const GameScene = () => {
     renderer.physicallyCorrectLights = true; // for more realistic lighting? i dont know if this is actually doing anything
     mountRef.current.appendChild(renderer.domElement);
 
+    // css3d renderer for youtube
     const css3dRenderer = new CSS3DRenderer();
     css3dRenderer.setSize(window.innerWidth, window.innerHeight);
     css3dRenderer.domElement.style.position = "absolute";
     css3dRenderer.domElement.style.top = "0";
     css3dMountRef.current.appendChild(css3dRenderer.domElement);
 
+    // pointer lock controls
     const controls = new PointerLockControls(camera, document.body);
     scene.add(controls.getObject());
 
