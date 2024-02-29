@@ -13,6 +13,12 @@ A multiplayer YouTube first-person view website built with Three.js, Blender, Re
 
 ## Commands to run project locally
 
+### Install dependencies
+
+```bash
+npm install
+```
+
 ### Start websocket server
 
 Make sure to change the websocket url in `src/Components/GameScene.js` to `ws://localhost:8080`:
