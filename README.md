@@ -10,6 +10,7 @@ A multiplayer YouTube first-person view website built with Three.js, Blender, Re
 - WASD to move
 - Mouse to look around
 - Q to toggle menu for changing youtube videos
+- Esc to unlock cursor to click on embedded video player
 
 ## Commands to run project locally
 
