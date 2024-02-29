@@ -15,7 +15,7 @@ const GameScene = () => {
   const css3dMountRef = useRef(null);
   const allowRetryRef = useRef(true);
 
-  const [peers, setPeers] = useState({});
+  // const [peers, setPeers] = useState({});
   const selfPeerIdRef = useRef(null); // TODO: testing some things out, may need to remove
   const otherPlayers = useRef({});
   const lastPositionSentRef = useRef({ x: 0, y: 0, z: 0 });
@@ -149,30 +149,31 @@ const GameScene = () => {
     };
 
     // handle signaling for peers
-    const handleSignalData = (data) => {
-      if (data.signal && peers[data.peerId]) {
-        peers[data.peerId].signal(data.signal);
-      }
-    };
+    // const handleSignalData = (data) => {
+    //   if (data.signal && peers[data.peerId]) {
+    //     peers[data.peerId].signal(data.signal);
+    //   }
+    // };
 
     // create and manage a new peer connection
     const handleNewPeer = (data) => {
       const peerId = data.peerId;
-      const peer = new Peer({ initiator: false, trickle: false });
+      // const peer = new Peer({ initiator: false, trickle: false });
 
-      peer.on("signal", (signal) => {
-        wsRef.current.send(JSON.stringify({ type: "signal", peerId, signal }));
-      });
+      // peer.on("signal", (signal) => {
+      //   wsRef.current.send(JSON.stringify({ type: "signal", peerId, signal }));
+      // });
 
-      peer.on("data", (data) => {
-        const parsedData = JSON.parse(data);
-        const { type, position } = parsedData;
-        if (type === "updatePosition" && position) {
-          updatePlayerPosition(peerId, position);
-        }
-      });
+      // peer.on("data", (data) => {
+      //   const parsedData = JSON.parse(data);
+      //   const { type, position } = parsedData;
+      //   if (type === "updatePosition" && position) {
+      //     updatePlayerPosition(peerId, position);
+      //   }
+      // });
 
-      setPeers((prev) => ({ ...prev, [peerId]: peer }));
+      // add peer to otherPlayers.current
+      otherPlayers.current[peerId] = peerId;
     };
 
     // handle update player position
@@ -190,7 +191,7 @@ const GameScene = () => {
         // TODO: add pop up message for when a new player joins w/ their name
         switch (data.type) {
           case "signal":
-            handleSignalData(data);
+            // handleSignalData(data);
             handleUpdatePosition(data); // display player for initial spawn position
 
             break;
@@ -199,20 +200,71 @@ const GameScene = () => {
             break;
           case "new-peer":
             console.log("New peer joined the server:", data);
+            broadcastCurrentPlayers();
             handleNewPeer(data);
             // TODO: send the video ID to the new peer, testing to see if this works
             updateVideo(videoIdRef.current);
             break;
           case "updatePosition":
+            console.log(otherPlayers.current);
             // if (debugMode) {
             // console.log("||RECEIVED|| position update:", data); // debug, commented out to avoid spam
             // }
             handleUpdatePosition(data);
             break;
+          case "current-players":
+            const currentPlayers = data.players; // assuming this is an array of player IDs
+            currentPlayers.forEach((playerId) => {
+              if (!otherPlayers.current[playerId]) {
+                // create a new player object and add to otherPlayers.current
+                addPlayer(playerId);
+              }
+            });
+            break;
           default:
             console.error("Received unknown data type:", data.type);
         }
       };
+
+      // broadcasting current players
+      const broadcastCurrentPlayers = () => {
+        const currentPlayers = otherPlayers.current;
+        if (debugMode) {
+          console.log("Broadcasting current players:", currentPlayers);
+        }
+        wsRef.current.send(
+          JSON.stringify({
+            type: "current-players",
+            players: currentPlayers,
+          })
+        );
+      };
+
+      const addPlayer = (playerId) => {
+        // create a new THREE.js object for new player
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+        const material = new THREE.MeshBasicMaterial({
+          color: Math.random() * 0xffffff,
+        });
+        const mesh = new THREE.Mesh(geometry, material);
+        scene.add(mesh);
+
+        // add the new player to otherPlayers.current
+        otherPlayers.current[playerId] = mesh;
+      };
+
+      // handle beforeunload event to notify the server when the user leaves and removes them from otherPlayers.current
+      const handleBeforeUnload = () => {
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+          wsRef.current.send(
+            JSON.stringify({
+              type: "peer-left",
+              peerId: selfPeerIdRef.current,
+            })
+          );
+        }
+      };
+      window.addEventListener("beforeunload", handleBeforeUnload);
 
       const processData = (data) => {
         console.log("Processing data:", data);
@@ -516,12 +568,13 @@ const GameScene = () => {
     return () => {
       // cleanup
       clearInterval(positionIntervalRef.current);
+      window.removeEventListener("beforeunload", handleBeforeUnload); // TODO: need a better way to clean this up
       wsRef.current.close();
       mountRef.current.removeChild(renderer.domElement);
       document.removeEventListener("keydown", (event) => {});
       document.removeEventListener("keyup", (event) => {});
     };
-  }, [peers]);
+  }, []);
 
   // i know im using react but im putting this component here cause im lazy and dont want to deal with hooks
   const VideoMenu = () => {
