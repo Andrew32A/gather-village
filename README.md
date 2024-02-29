@@ -5,6 +5,12 @@ A multiplayer YouTube first-person view website built with Three.js, Blender, Re
 <h2 align="center"><a href="https://gather-village.vercel.app/">Click here to try it out!</a></h3>
 <img src="https://github.com/Andrew32A/gather-village/blob/main/public/images/screenshot1.png?raw=true" align="center">
 
+## Controls
+
+- WASD to move
+- Mouse to look around
+- Q to toggle menu for changing youtube videos
+
 ## Commands to run project locally
 
 ### Start websocket server
