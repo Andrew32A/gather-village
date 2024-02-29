@@ -16,6 +16,7 @@ const GameScene = () => {
   const allowRetryRef = useRef(true);
 
   const [peers, setPeers] = useState({});
+  const selfPeerIdRef = useRef(null); // TODO: testing some things out, may need to remove
   const otherPlayers = useRef({});
   const lastPositionSentRef = useRef({ x: 0, y: 0, z: 0 });
   const updatePositionTickRate = 30; // in milliseconds
@@ -25,6 +26,7 @@ const GameScene = () => {
 
   const videoMenuVisibilityRef = useRef(false);
   const youtubeWallRef = useRef(null);
+  let videoIdRef = useRef(null); // store video id so when a new player joins, everyone hands them new video
 
   // youtube wall global position and rotation
   const youtubeWallX = -100; // left/right of user
@@ -118,8 +120,17 @@ const GameScene = () => {
         })
       );
 
+      // generate random peer id
+      selfPeerIdRef.current = Math.random().toString(36).substring(7);
+
+      if (debugMode) {
+        console.log("Generated peer ID:", selfPeerIdRef.current);
+      }
+
       // announce to others by sending new-peer message
-      wsRef.current.send(JSON.stringify({ type: "new-peer" }));
+      wsRef.current.send(
+        JSON.stringify({ type: "new-peer", peerId: selfPeerIdRef.current })
+      );
     };
     wsRef.onclose = () => {
       console.log("WebSocket connection closed. Attempting to reconnect...");
@@ -134,7 +145,7 @@ const GameScene = () => {
     };
     wsRef.onerror = (error) => {
       console.error("WebSocket encountered an error:", error);
-      wsRef.close(); // Close the connection on error to trigger the onclose handler
+      wsRef.close(); // close the connection on error to trigger the onclose handler
     };
 
     // handle signaling for peers
@@ -187,18 +198,10 @@ const GameScene = () => {
             updateVideo(data.videoId);
             break;
           case "new-peer":
+            console.log("New peer joined the server:", data);
             handleNewPeer(data);
-            handleUpdatePosition(data); // display player for initial spawn position
             // TODO: send the video ID to the new peer, testing to see if this works
-            if (youtubeWallRef.current) {
-              wsRef.current.send(
-                JSON.stringify({
-                  type: "updateVideo",
-                  videoId:
-                    youtubeWallRef.current.element.querySelector("iframe").id,
-                })
-              );
-            }
+            updateVideo(videoIdRef.current);
             break;
           case "updatePosition":
             // if (debugMode) {
@@ -212,6 +215,7 @@ const GameScene = () => {
       };
 
       const processData = (data) => {
+        console.log("Processing data:", data);
         try {
           const parsedData = JSON.parse(data);
           handleData(parsedData);
@@ -534,6 +538,7 @@ const GameScene = () => {
       );
       if (videoIdMatch && videoIdMatch[1]) {
         const videoId = videoIdMatch[1];
+        videoIdRef.current = videoId;
         console.log("Sending video ID to websocket server:", videoId);
 
         // send the video ID to the WebSocket server
