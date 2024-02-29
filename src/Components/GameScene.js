@@ -117,6 +117,9 @@ const GameScene = () => {
           position: { x: 0, y: 2, z: 0 },
         })
       );
+
+      // announce to others by sending new-peer message
+      wsRef.current.send(JSON.stringify({ type: "new-peer" }));
     };
     wsRef.onclose = () => {
       console.log("WebSocket connection closed. Attempting to reconnect...");
@@ -178,16 +181,6 @@ const GameScene = () => {
           case "signal":
             handleSignalData(data);
             handleUpdatePosition(data); // display player for initial spawn position
-            // TODO: send the video ID to the new peer
-            // if (youtubeWallRef.current) {
-            //   wsRef.current.send(
-            //     JSON.stringify({
-            //       type: "updateVideo",
-            //       videoId:
-            //         youtubeWallRef.current.element.querySelector("iframe").id,
-            //     })
-            //   );
-            // }
 
             break;
           case "updateVideo":
@@ -196,6 +189,16 @@ const GameScene = () => {
           case "new-peer":
             handleNewPeer(data);
             handleUpdatePosition(data); // display player for initial spawn position
+            // TODO: send the video ID to the new peer, testing to see if this works
+            if (youtubeWallRef.current) {
+              wsRef.current.send(
+                JSON.stringify({
+                  type: "updateVideo",
+                  videoId:
+                    youtubeWallRef.current.element.querySelector("iframe").id,
+                })
+              );
+            }
             break;
           case "updatePosition":
             // if (debugMode) {
